@@ -15,35 +15,79 @@
     </header>
 
     <main class="container">
-      <section class="booth">
-        <div class="preview">
-          <video id="camera" autoplay playsinline muted></video>
-          <canvas id="canvas" class="hidden"></canvas>
-          <img id="frameOverlay" class="frame" alt="Selected frame" />
+      <section id="captureScreen" class="screen">
+        <div class="booth">
+          <div class="preview">
+            <video id="camera" autoplay playsinline muted></video>
+            <canvas id="canvas" class="hidden"></canvas>
+            <img id="frameOverlay" class="frame" alt="Selected frame" />
+          </div>
+
+          <div class="controls-panel">
+            <div class="status">
+              <span id="captureCount">0</span> /
+              <span id="captureMax">10</span> photos
+            </div>
+            <div class="controls">
+              <button id="startCamera" class="primary">Start camera</button>
+              <button id="capturePhoto">Capture</button>
+            </div>
+            <p class="hint">Take up to 10 photos. You'll pick 4 later.</p>
+          </div>
         </div>
 
-        <div class="controls">
-          <button id="startCamera" class="primary">Start camera</button>
-          <button id="capturePhoto">Capture</button>
-          <button id="downloadPhoto">Download</button>
-        </div>
+        <section class="frames">
+          <h2>Choose a frame</h2>
+          <div class="frame-list" id="frameList">
+            <button class="frame-option is-active" data-frame="">
+              <span>No frame</span>
+            </button>
+            <button class="frame-option" data-frame="./assets/frames/frame-01.png">
+              <span>Frame 01</span>
+            </button>
+            <button class="frame-option" data-frame="./assets/frames/frame-02.png">
+              <span>Frame 02</span>
+            </button>
+            <button class="frame-option" data-frame="./assets/frames/frame-03.png">
+              <span>Frame 03</span>
+            </button>
+          </div>
+        </section>
       </section>
 
-      <section class="frames">
-        <h2>Choose a frame</h2>
-        <div class="frame-list" id="frameList">
-          <button class="frame-option is-active" data-frame="">
-            <span>No frame</span>
-          </button>
-          <button class="frame-option" data-frame="./assets/frames/frame-01.png">
-            <span>Frame 01</span>
-          </button>
-          <button class="frame-option" data-frame="./assets/frames/frame-02.png">
-            <span>Frame 02</span>
-          </button>
-          <button class="frame-option" data-frame="./assets/frames/frame-03.png">
-            <span>Frame 03</span>
-          </button>
+      <section id="selectionScreen" class="screen hidden">
+        <div class="selection-header">
+          <h2>Build your photo strip</h2>
+          <p>Select a slot, then choose a photo from your 10 captures.</p>
+        </div>
+        <div class="selection-body">
+          <div class="strip">
+            <button class="strip-slot is-active" data-slot="0">
+              <img alt="Strip slot 1" />
+              <span>1</span>
+            </button>
+            <button class="strip-slot" data-slot="1">
+              <img alt="Strip slot 2" />
+              <span>2</span>
+            </button>
+            <button class="strip-slot" data-slot="2">
+              <img alt="Strip slot 3" />
+              <span>3</span>
+            </button>
+            <button class="strip-slot" data-slot="3">
+              <img alt="Strip slot 4" />
+              <span>4</span>
+            </button>
+          </div>
+
+          <div class="thumbnail-panel">
+            <h3>Choose 4 of 10</h3>
+            <div class="thumbnail-grid" id="thumbnailGrid"></div>
+            <div class="controls">
+              <button id="downloadStrip" class="primary">Download strip</button>
+              <button id="startOver">Start over</button>
+            </div>
+          </div>
         </div>
       </section>
     </main>
