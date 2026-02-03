@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Puppy Photobooth</title>
+    <link rel="stylesheet" href="./styles/main.css" />
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="container">
+        <h1>Puppy Photobooth</h1>
+        <p>Capture a photo and add a custom frame.</p>
+      </div>
+    </header>
+
+    <main class="container">
+      <section class="booth">
+        <div class="preview">
+          <video id="camera" autoplay playsinline muted></video>
+          <canvas id="canvas" class="hidden"></canvas>
+          <img id="frameOverlay" class="frame" alt="Selected frame" />
+        </div>
+
+        <div class="controls">
+          <button id="startCamera" class="primary">Start camera</button>
+          <button id="capturePhoto">Capture</button>
+          <button id="downloadPhoto">Download</button>
+        </div>
+      </section>
+
+      <section class="frames">
+        <h2>Choose a frame</h2>
+        <div class="frame-list" id="frameList">
+          <button class="frame-option is-active" data-frame="">
+            <span>No frame</span>
+          </button>
+          <button class="frame-option" data-frame="./assets/frames/frame-01.png">
+            <span>Frame 01</span>
+          </button>
+          <button class="frame-option" data-frame="./assets/frames/frame-02.png">
+            <span>Frame 02</span>
+          </button>
+          <button class="frame-option" data-frame="./assets/frames/frame-03.png">
+            <span>Frame 03</span>
+          </button>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="container">
+        <small>Tip: Add your PNG/SVG frames in <code>src/assets/frames</code>.</small>
+      </div>
+    </footer>
+
+    <script src="./scripts/main.js"></script>
+  </body>
+</html>
