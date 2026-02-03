@@ -3,20 +3,39 @@ const canvas = document.querySelector("#canvas");
 const frameOverlay = document.querySelector("#frameOverlay");
 const startButton = document.querySelector("#startCamera");
 const captureButton = document.querySelector("#capturePhoto");
-const downloadButton = document.querySelector("#downloadPhoto");
 const frameList = document.querySelector("#frameList");
+const captureCount = document.querySelector("#captureCount");
+const captureMax = document.querySelector("#captureMax");
+const captureScreen = document.querySelector("#captureScreen");
+const selectionScreen = document.querySelector("#selectionScreen");
+const thumbnailGrid = document.querySelector("#thumbnailGrid");
+const stripSlots = document.querySelectorAll(".strip-slot");
+const downloadStripButton = document.querySelector("#downloadStrip");
+const startOverButton = document.querySelector("#startOver");
+
+const MAX_PHOTOS = 10;
+const STRIP_SLOTS = 4;
+const photos = [];
+const selectedSlots = Array.from({ length: STRIP_SLOTS }, () => null);
 
 let stream = null;
-let capturedDataUrl = "";
+let selectedFramePath = "";
+let activeSlotIndex = 0;
 
 const setFrame = (framePath) => {
+  selectedFramePath = framePath;
   frameOverlay.src = framePath;
   frameOverlay.classList.toggle("hidden", !framePath);
 };
 
+const updateCaptureCount = () => {
+  captureCount.textContent = photos.length;
+  captureMax.textContent = MAX_PHOTOS;
+};
+
 const setButtonsState = (state) => {
-  captureButton.disabled = !state.cameraOn;
-  downloadButton.disabled = !state.hasPhoto;
+  captureButton.disabled =
+    !state.cameraOn || photos.length >= MAX_PHOTOS;
 };
 
 const startCamera = async () => {
@@ -28,43 +47,151 @@ const startCamera = async () => {
       audio: false,
     });
     video.srcObject = stream;
-    setButtonsState({ cameraOn: true, hasPhoto: false });
+    setButtonsState({ cameraOn: true });
   } catch (error) {
     console.error("Camera access failed:", error);
     alert("Unable to access the camera. Please allow camera permissions.");
   }
 };
 
+const drawFrameIfNeeded = (context, callback) => {
+  if (!selectedFramePath) {
+    callback();
+    return;
+  }
+
+  const frameImage = new Image();
+  frameImage.src = selectedFramePath;
+  frameImage.onload = () => {
+    context.drawImage(frameImage, 0, 0, canvas.width, canvas.height);
+    callback();
+  };
+};
+
 const capturePhoto = () => {
-  if (!stream) return;
+  if (!stream || photos.length >= MAX_PHOTOS) return;
 
   const context = canvas.getContext("2d");
   canvas.width = video.videoWidth || 640;
   canvas.height = video.videoHeight || 480;
-
   context.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-  if (frameOverlay.src) {
-    const frameImage = new Image();
-    frameImage.src = frameOverlay.src;
-    frameImage.onload = () => {
-      context.drawImage(frameImage, 0, 0, canvas.width, canvas.height);
-      capturedDataUrl = canvas.toDataURL("image/png");
-      setButtonsState({ cameraOn: true, hasPhoto: true });
-    };
+  drawFrameIfNeeded(context, () => {
+    photos.push(canvas.toDataURL("image/png"));
+    updateCaptureCount();
+    setButtonsState({ cameraOn: true });
+
+    if (photos.length === MAX_PHOTOS) {
+      showSelectionScreen();
+    }
+  });
+};
+
+const setActiveSlot = (index) => {
+  activeSlotIndex = index;
+  stripSlots.forEach((slot) => slot.classList.remove("is-active"));
+  stripSlots[index].classList.add("is-active");
+};
+
+const updateSlots = () => {
+  stripSlots.forEach((slot, index) => {
+    const img = slot.querySelector("img");
+    const photo = selectedSlots[index];
+    img.src = photo || "";
+    slot.classList.toggle("is-filled", Boolean(photo));
+  });
+};
+
+const renderThumbnails = () => {
+  thumbnailGrid.innerHTML = "";
+  photos.forEach((photo, index) => {
+    const button = document.createElement("button");
+    button.className = "thumbnail";
+    button.type = "button";
+    button.dataset.photoIndex = index;
+
+    const img = document.createElement("img");
+    img.src = photo;
+    img.alt = `Captured photo ${index + 1}`;
+    button.appendChild(img);
+    thumbnailGrid.appendChild(button);
+  });
+};
+
+const showSelectionScreen = () => {
+  captureScreen.classList.add("hidden");
+  selectionScreen.classList.remove("hidden");
+  renderThumbnails();
+  updateSlots();
+  setActiveSlot(0);
+};
+
+const assignPhotoToSlot = (photoIndex) => {
+  selectedSlots[activeSlotIndex] = photos[photoIndex];
+  updateSlots();
+};
+
+const loadImage = (src) =>
+  new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.onerror = reject;
+    img.src = src;
+  });
+
+const drawCover = (context, img, x, y, width, height) => {
+  const scale = Math.max(width / img.width, height / img.height);
+  const drawWidth = img.width * scale;
+  const drawHeight = img.height * scale;
+  const offsetX = x + (width - drawWidth) / 2;
+  const offsetY = y + (height - drawHeight) / 2;
+  context.drawImage(img, offsetX, offsetY, drawWidth, drawHeight);
+};
+
+const downloadStrip = async () => {
+  if (selectedSlots.some((slot) => !slot)) {
+    alert("Please fill all 4 slots before downloading.");
     return;
   }
 
-  capturedDataUrl = canvas.toDataURL("image/png");
-  setButtonsState({ cameraOn: true, hasPhoto: true });
+  const images = await Promise.all(
+    selectedSlots.map((slot) => loadImage(slot))
+  );
+  const stripWidth = 700;
+  const padding = 32;
+  const gap = 20;
+  const photoWidth = stripWidth - padding * 2;
+  const photoHeight = Math.round(photoWidth * 0.75);
+  const stripHeight =
+    padding * 2 + photoHeight * STRIP_SLOTS + gap * (STRIP_SLOTS - 1);
+
+  const stripCanvas = document.createElement("canvas");
+  stripCanvas.width = stripWidth;
+  stripCanvas.height = stripHeight;
+  const context = stripCanvas.getContext("2d");
+  context.fillStyle = "#ffffff";
+  context.fillRect(0, 0, stripWidth, stripHeight);
+
+  images.forEach((img, index) => {
+    const y = padding + index * (photoHeight + gap);
+    drawCover(context, img, padding, y, photoWidth, photoHeight);
+  });
+
+  const link = document.createElement("a");
+  link.href = stripCanvas.toDataURL("image/png");
+  link.download = "puppy-photobooth-strip.png";
+  link.click();
 };
 
-const downloadPhoto = () => {
-  if (!capturedDataUrl) return;
-  const link = document.createElement("a");
-  link.href = capturedDataUrl;
-  link.download = "puppy-photobooth.png";
-  link.click();
+const startOver = () => {
+  photos.length = 0;
+  selectedSlots.fill(null);
+  updateCaptureCount();
+  updateSlots();
+  renderThumbnails();
+  selectionScreen.classList.add("hidden");
+  captureScreen.classList.remove("hidden");
+  setButtonsState({ cameraOn: Boolean(stream) });
 };
 
 frameList.addEventListener("click", (event) => {
@@ -79,9 +206,22 @@ frameList.addEventListener("click", (event) => {
   setFrame(framePath);
 });
 
+thumbnailGrid.addEventListener("click", (event) => {
+  const button = event.target.closest(".thumbnail");
+  if (!button) return;
+  const photoIndex = Number(button.dataset.photoIndex);
+  assignPhotoToSlot(photoIndex);
+});
+
+stripSlots.forEach((slot, index) => {
+  slot.addEventListener("click", () => setActiveSlot(index));
+});
+
 startButton.addEventListener("click", startCamera);
 captureButton.addEventListener("click", capturePhoto);
-downloadButton.addEventListener("click", downloadPhoto);
+downloadStripButton.addEventListener("click", downloadStrip);
+startOverButton.addEventListener("click", startOver);
 
-setButtonsState({ cameraOn: false, hasPhoto: false });
+setButtonsState({ cameraOn: false });
+updateCaptureCount();
 setFrame("");
