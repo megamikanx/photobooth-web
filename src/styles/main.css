@@ -209,13 +209,19 @@ button:active {
   transition: opacity 0.2s ease;
 }
 
+.strip-slot img.strip-frame {
+  opacity: 1;
+  pointer-events: none;
+  z-index: 2;
+}
+
 .strip-slot span {
   position: relative;
   z-index: 1;
   font-weight: 600;
 }
 
-.strip-slot.is-filled img {
+.strip-slot.is-filled img.strip-photo {
   opacity: 1;
 }
 

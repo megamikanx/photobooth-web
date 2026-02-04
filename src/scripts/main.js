@@ -15,17 +15,34 @@ const startOverButton = document.querySelector("#startOver");
 
 const MAX_PHOTOS = 10;
 const STRIP_SLOTS = 4;
+const FRAME_SETS = {
+  "set-01": [
+    "./assets/frames/set-01-1.png",
+    "./assets/frames/set-01-2.png",
+    "./assets/frames/set-01-3.png",
+    "./assets/frames/set-01-4.png",
+  ],
+};
 const photos = [];
 const selectedSlots = Array.from({ length: STRIP_SLOTS }, () => null);
 
 let stream = null;
 let selectedFramePath = "";
+let selectedFrameSet = null;
 let activeSlotIndex = 0;
 
 const setFrame = (framePath) => {
   selectedFramePath = framePath;
+  selectedFrameSet = null;
   frameOverlay.src = framePath;
   frameOverlay.classList.toggle("hidden", !framePath);
+};
+
+const setFrameSet = (frameSetKey) => {
+  selectedFrameSet = FRAME_SETS[frameSetKey] || null;
+  selectedFramePath = "";
+  frameOverlay.src = "";
+  frameOverlay.classList.add("hidden");
 };
 
 const updateCaptureCount = () => {
@@ -101,10 +118,12 @@ const setActiveSlot = (index) => {
 
 const updateSlots = () => {
   stripSlots.forEach((slot, index) => {
-    const img = slot.querySelector("img");
+    const img = slot.querySelector(".strip-photo");
+    const frame = slot.querySelector(".strip-frame");
     const photo = selectedSlots[index];
     img.src = photo || "";
     slot.classList.toggle("is-filled", Boolean(photo));
+    frame.src = selectedFrameSet ? selectedFrameSet[index] || "" : "";
   });
 };
 
@@ -163,6 +182,9 @@ const downloadStrip = async () => {
   const images = await Promise.all(
     selectedSlots.map((slot) => loadImage(slot))
   );
+  const frameImages = selectedFrameSet
+    ? await Promise.all(selectedFrameSet.map((src) => loadImage(src)))
+    : [];
   const stripWidth = 700;
   const padding = 32;
   const gap = 20;
@@ -181,6 +203,9 @@ const downloadStrip = async () => {
   images.forEach((img, index) => {
     const y = padding + index * (photoHeight + gap);
     drawCover(context, img, padding, y, photoWidth, photoHeight);
+    if (frameImages[index]) {
+      context.drawImage(frameImages[index], padding, y, photoWidth, photoHeight);
+    }
   });
 
   const link = document.createElement("a");
@@ -204,12 +229,18 @@ frameList.addEventListener("click", (event) => {
   const button = event.target.closest(".frame-option");
   if (!button) return;
   const framePath = button.dataset.frame || "";
+  const frameSetKey = button.dataset.frameSet || "";
 
   document
     .querySelectorAll(".frame-option")
     .forEach((option) => option.classList.remove("is-active"));
   button.classList.add("is-active");
-  setFrame(framePath);
+  if (frameSetKey) {
+    setFrameSet(frameSetKey);
+  } else {
+    setFrame(framePath);
+  }
+  updateSlots();
 });
 
 thumbnailGrid.addEventListener("click", (event) => {
