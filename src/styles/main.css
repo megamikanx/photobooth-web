@@ -53,7 +53,7 @@ body {
 }
 
 .portrait {
-  filter: blur(0.4px) brightness(1.1) hue-rotate(12deg) grayscale(10%) constrast(115%);
+  filter: blur(0.4px) brightness(1.1) hue-rotate(12deg) grayscale(10%) contrast(115%);
 }
 
 .preview {
@@ -88,7 +88,7 @@ body {
 
 .preview video.filtered,
 .preview canvas.filtered {
-  filter: blur(0.4px) brightness(1.1) hue-rotate(12deg) grayscale(10%) constrast(115%)
+  filter: blur(0.4px) brightness(1.1) hue-rotate(12deg) grayscale(10%) contrast(115%);
 }
 
 .controls {
@@ -147,6 +147,11 @@ button:active {
   display: grid;
   gap: 12px;
   grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+}
+
+.frame-list[aria-disabled="true"] .frame-option {
+  opacity: 0.5;
+  pointer-events: none;
 }
 
 .frame-option {

@@ -32,19 +32,23 @@
           <div class="controls-panel">
             <div class="status">
               <span id="captureCount">0</span> /
-              <span id="captureMax">10</span> photos
+              <span id="captureMax">8</span> photos
             </div>
             <div class="controls">
-              <button id="startCamera" class="primary">Start camera</button>
-              <button id="capturePhoto">Capture</button>
+              <button id="startCamera" class="primary" type="button">
+                Start camera
+              </button>
+              <button id="capturePhoto" type="button">Capture</button>
             </div>
-            <p class="hint">Take up to 10 photos. You'll pick 4 later.</p>
+            <p class="hint">
+              Step 1: Start camera. Step 2: Choose a frame set. Step 3: Capture.
+            </p>
           </div>
         </div>
 
         <section class="frames">
           <h2>Choose a frame set</h2>
-          <div class="frame-list" id="frameList">
+          <div class="frame-list" id="frameList" aria-disabled="true">
             <button class="frame-option is-active" data-frame="">
               <span>No frame</span>
             </button>
@@ -52,13 +56,14 @@
               <span>Frame Set 01</span>
             </button>
           </div>
+          <p class="hint">You can't change frames after taking the first photo.</p>
         </section>
       </section>
 
       <section id="selectionScreen" class="screen hidden">
         <div class="selection-header">
           <h2>Build your photo strip</h2>
-          <p>Select a slot, then choose a photo from your 10 captures.</p>
+          <p>Select a slot, then choose a photo from your 8 captures.</p>
         </div>
         <div class="selection-body">
           <div class="strip">
