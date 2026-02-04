@@ -221,10 +221,15 @@ button:active {
   z-index: 2;
 }
 
+.strip-slot img.strip-frame.is-hidden {
+  display: none;
+}
+
 .strip-slot span {
   position: relative;
   z-index: 1;
   font-weight: 600;
+  pointer-events: none;
 }
 
 .strip-slot.is-filled img.strip-photo {

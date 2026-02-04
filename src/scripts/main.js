@@ -9,6 +9,7 @@ const captureMax = document.querySelector("#captureMax");
 const captureScreen = document.querySelector("#captureScreen");
 const selectionScreen = document.querySelector("#selectionScreen");
 const thumbnailGrid = document.querySelector("#thumbnailGrid");
+const strip = document.querySelector(".strip");
 const stripSlots = document.querySelectorAll(".strip-slot");
 const downloadStripButton = document.querySelector("#downloadStrip");
 const startOverButton = document.querySelector("#startOver");
@@ -30,6 +31,10 @@ let stream = null;
 let selectedFramePath = "";
 let selectedFrameSet = null;
 let activeSlotIndex = 0;
+let frameLocked = false;
+
+const getActiveFrameOption = () =>
+  frameList.querySelector(".frame-option.is-active");
 
 const getCurrentCaptureFramePath = () => {
   if (selectedFramePath) return selectedFramePath;
@@ -44,32 +49,66 @@ const getCurrentCaptureFramePath = () => {
 const setFrame = (framePath) => {
   selectedFramePath = framePath;
   selectedFrameSet = null;
-  frameOverlay.src = framePath;
-  frameOverlay.classList.toggle("hidden", !framePath);
+  setPreviewFrame(framePath);
 };
 
 const setFrameSet = (frameSetKey) => {
   selectedFrameSet = FRAME_SETS[frameSetKey] || null;
   selectedFramePath = "";
-  const previewFrame = getCurrentCaptureFramePath();
-  frameOverlay.src = previewFrame;
-  frameOverlay.classList.toggle("hidden", !previewFrame);
+  setPreviewFrame(getCurrentCaptureFramePath());
 };
 
 const updateCaptureCount = () => {
   captureCount.textContent = photos.length;
   captureMax.textContent = MAX_PHOTOS;
   if (selectedFrameSet) {
-    const previewFrame = getCurrentCaptureFramePath();
-    frameOverlay.src = previewFrame;
-    frameOverlay.classList.toggle("hidden", !previewFrame);
+    setPreviewFrame(getCurrentCaptureFramePath());
   }
 };
 
 const setButtonsState = (state) => {
-  captureButton.disabled =
-    !state.cameraOn || photos.length >= MAX_PHOTOS;
+  captureButton.disabled = !state.cameraOn || photos.length >= MAX_PHOTOS;
 };
+
+const setFrameListState = (enabled) => {
+  frameList.setAttribute("aria-disabled", enabled ? "false" : "true");
+};
+
+const setPreviewFrame = (framePath) => {
+  if (!framePath) {
+    frameOverlay.src = "";
+    frameOverlay.classList.add("hidden");
+    return;
+  }
+  frameOverlay.src = framePath;
+  frameOverlay.classList.remove("hidden");
+};
+
+frameOverlay.addEventListener("error", () => {
+  console.warn("Preview frame failed to load:", frameOverlay.src);
+  frameOverlay.src = "";
+  frameOverlay.classList.add("hidden");
+});
+const applyActiveFrameSelection = () => {
+  const activeButton = getActiveFrameOption();
+  if (!activeButton) return;
+  const framePath = activeButton.dataset.frame || "";
+  const frameSetKey = activeButton.dataset.frameSet || "";
+  if (frameSetKey) {
+    setFrameSet(frameSetKey);
+  } else {
+    setFrame(framePath);
+  }
+};
+
+const waitForVideoReady = () =>
+  new Promise((resolve) => {
+    if (video.readyState >= 2) {
+      resolve();
+      return;
+    }
+    video.addEventListener("loadeddata", resolve, { once: true });
+  });
 
 const startCamera = async () => {
   if (stream) return;
@@ -80,7 +119,10 @@ const startCamera = async () => {
       audio: false,
     });
     video.srcObject = stream;
+    await video.play();
+    applyActiveFrameSelection();
     setButtonsState({ cameraOn: true });
+    setFrameListState(true);
   } catch (error) {
     console.error("Camera access failed:", error);
     alert("Unable to access the camera. Please allow camera permissions.");
@@ -95,20 +137,36 @@ const drawFrameIfNeeded = (context, callback) => {
   }
 
   const frameImage = new Image();
+  let settled = false;
+  const finish = () => {
+    if (settled) return;
+    settled = true;
+    callback();
+  };
+  const fallbackTimer = setTimeout(finish, 500);
+  frameImage.crossOrigin = "anonymous";
   frameImage.src = framePath;
   frameImage.onload = () => {
     context.drawImage(frameImage, 0, 0, canvas.width, canvas.height);
-    callback();
+    clearTimeout(fallbackTimer);
+    finish();
+  };
+  frameImage.onerror = () => {
+    console.warn("Frame image failed to load:", framePath);
+    clearTimeout(fallbackTimer);
+    finish();
   };
 };
 
-const capturePhoto = () => {
+const capturePhoto = async () => {
   if (!stream || photos.length >= MAX_PHOTOS) return;
+  await waitForVideoReady();
 
   const context = canvas.getContext("2d");
   canvas.width = video.videoWidth || 640;
   canvas.height = video.videoHeight || 480;
-  context.filter = "blur(0.4px) brightness(1.1) hue-rotate(12deg) grayscale(10%) constrast(115%)";
+  context.filter =
+    "blur(0.4px) brightness(1.1) hue-rotate(12deg) grayscale(10%) contrast(115%)";
   context.save();
   context.translate(canvas.width, 0);
   context.scale(-1, 1);
@@ -118,6 +176,10 @@ const capturePhoto = () => {
 
   drawFrameIfNeeded(context, () => {
     photos.push(canvas.toDataURL("image/png"));
+    if (!frameLocked) {
+      frameLocked = true;
+      setFrameListState(false);
+    }
     updateCaptureCount();
     setButtonsState({ cameraOn: true });
 
@@ -140,7 +202,13 @@ const updateSlots = () => {
     const photo = selectedSlots[index];
     img.src = photo || "";
     slot.classList.toggle("is-filled", Boolean(photo));
-    frame.src = selectedFrameSet ? selectedFrameSet[index] || "" : "";
+    if (selectedFrameSet && selectedFrameSet[index]) {
+      frame.src = selectedFrameSet[index];
+      frame.classList.remove("is-hidden");
+    } else {
+      frame.src = "";
+      frame.classList.add("is-hidden");
+    }
   });
 };
 
@@ -168,8 +236,15 @@ const showSelectionScreen = () => {
   setActiveSlot(0);
 };
 
+const getActiveSlotIndex = () => {
+  const activeSlot = document.querySelector(".strip-slot.is-active");
+  const index = activeSlot ? Number(activeSlot.dataset.slot) : activeSlotIndex;
+  return Number.isNaN(index) ? activeSlotIndex : index;
+};
+
 const assignPhotoToSlot = (photoIndex) => {
-  selectedSlots[activeSlotIndex] = photos[photoIndex];
+  const index = getActiveSlotIndex();
+  selectedSlots[index] = photos[photoIndex];
   updateSlots();
 };
 
@@ -234,15 +309,18 @@ const downloadStrip = async () => {
 const startOver = () => {
   photos.length = 0;
   selectedSlots.fill(null);
+  frameLocked = false;
   updateCaptureCount();
   updateSlots();
   renderThumbnails();
   selectionScreen.classList.add("hidden");
   captureScreen.classList.remove("hidden");
   setButtonsState({ cameraOn: Boolean(stream) });
+  setFrameListState(Boolean(stream));
 };
 
 frameList.addEventListener("click", (event) => {
+  if (frameLocked) return;
   const button = event.target.closest(".frame-option");
   if (!button) return;
   const framePath = button.dataset.frame || "";
@@ -258,6 +336,7 @@ frameList.addEventListener("click", (event) => {
     setFrame(framePath);
   }
   updateSlots();
+  setButtonsState({ cameraOn: Boolean(stream) });
 });
 
 thumbnailGrid.addEventListener("click", (event) => {
@@ -267,9 +346,15 @@ thumbnailGrid.addEventListener("click", (event) => {
   assignPhotoToSlot(photoIndex);
 });
 
-stripSlots.forEach((slot, index) => {
-  slot.addEventListener("click", () => setActiveSlot(index));
-});
+if (strip) {
+  strip.addEventListener("click", (event) => {
+    const slot = event.target.closest(".strip-slot");
+    if (!slot) return;
+    const index = Number(slot.dataset.slot);
+    if (Number.isNaN(index)) return;
+    setActiveSlot(index);
+  });
+}
 
 startButton.addEventListener("click", startCamera);
 captureButton.addEventListener("click", capturePhoto);
@@ -279,3 +364,4 @@ startOverButton.addEventListener("click", startOver);
 setButtonsState({ cameraOn: false });
 updateCaptureCount();
 setFrame("");
+setFrameListState(false);
