@@ -74,11 +74,13 @@ const capturePhoto = () => {
   const context = canvas.getContext("2d");
   canvas.width = video.videoWidth || 640;
   canvas.height = video.videoHeight || 480;
+  context.filter = "blur(0.4px) brightness(1.1) hue-rotate(12deg) grayscale(10%) constrast(115%)";
   context.save();
   context.translate(canvas.width, 0);
   context.scale(-1, 1);
   context.drawImage(video, 0, 0, canvas.width, canvas.height);
   context.restore();
+  context.filter = "none";
 
   drawFrameIfNeeded(context, () => {
     photos.push(canvas.toDataURL("image/png"));

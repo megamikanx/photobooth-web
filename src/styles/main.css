@@ -52,6 +52,10 @@ body {
   gap: 24px;
 }
 
+.portrait {
+  filter: blur(0.4px) brightness(1.1) hue-rotate(12deg) grayscale(10%) constrast(115%);
+}
+
 .preview {
   position: relative;
   background: var(--card);
@@ -80,6 +84,11 @@ body {
 
 .preview video.mirrored {
   transform: scaleX(-1);
+}
+
+.preview video.filtered,
+.preview canvas.filtered {
+  filter: blur(0.4px) brightness(1.1) hue-rotate(12deg) grayscale(10%) constrast(115%)
 }
 
 .controls {
