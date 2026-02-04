@@ -3,13 +3,13 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Puppy Photobooth</title>
+    <title>Photobooth</title>
     <link rel="stylesheet" href="./styles/main.css" />
   </head>
   <body>
     <header class="site-header">
       <div class="container">
-        <h1>Puppy Photobooth</h1>
+        <h1>Photobooth</h1>
         <p>Capture a photo and add a custom frame.</p>
       </div>
     </header>
@@ -18,7 +18,7 @@
       <section id="captureScreen" class="screen">
         <div class="booth">
           <div class="preview">
-            <video id="camera" autoplay playsinline muted></video>
+            <video id="camera" class="mirrored" autoplay playsinline muted></video>
             <canvas id="canvas" class="hidden"></canvas>
             <img id="frameOverlay" class="frame" alt="Selected frame" />
           </div>
