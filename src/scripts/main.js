@@ -13,7 +13,7 @@ const stripSlots = document.querySelectorAll(".strip-slot");
 const downloadStripButton = document.querySelector("#downloadStrip");
 const startOverButton = document.querySelector("#startOver");
 
-const MAX_PHOTOS = 10;
+const MAX_PHOTOS = 8;
 const STRIP_SLOTS = 4;
 const FRAME_SETS = {
   "set-01": [
@@ -31,6 +31,16 @@ let selectedFramePath = "";
 let selectedFrameSet = null;
 let activeSlotIndex = 0;
 
+const getCurrentCaptureFramePath = () => {
+  if (selectedFramePath) return selectedFramePath;
+  if (!selectedFrameSet) return "";
+  const frameIndex = Math.min(
+    selectedFrameSet.length - 1,
+    Math.floor(photos.length / 2)
+  );
+  return selectedFrameSet[frameIndex];
+};
+
 const setFrame = (framePath) => {
   selectedFramePath = framePath;
   selectedFrameSet = null;
@@ -41,13 +51,19 @@ const setFrame = (framePath) => {
 const setFrameSet = (frameSetKey) => {
   selectedFrameSet = FRAME_SETS[frameSetKey] || null;
   selectedFramePath = "";
-  frameOverlay.src = "";
-  frameOverlay.classList.add("hidden");
+  const previewFrame = getCurrentCaptureFramePath();
+  frameOverlay.src = previewFrame;
+  frameOverlay.classList.toggle("hidden", !previewFrame);
 };
 
 const updateCaptureCount = () => {
   captureCount.textContent = photos.length;
   captureMax.textContent = MAX_PHOTOS;
+  if (selectedFrameSet) {
+    const previewFrame = getCurrentCaptureFramePath();
+    frameOverlay.src = previewFrame;
+    frameOverlay.classList.toggle("hidden", !previewFrame);
+  }
 };
 
 const setButtonsState = (state) => {
@@ -72,13 +88,14 @@ const startCamera = async () => {
 };
 
 const drawFrameIfNeeded = (context, callback) => {
-  if (!selectedFramePath) {
+  const framePath = getCurrentCaptureFramePath();
+  if (!framePath) {
     callback();
     return;
   }
 
   const frameImage = new Image();
-  frameImage.src = selectedFramePath;
+  frameImage.src = framePath;
   frameImage.onload = () => {
     context.drawImage(frameImage, 0, 0, canvas.width, canvas.height);
     callback();
@@ -210,7 +227,7 @@ const downloadStrip = async () => {
 
   const link = document.createElement("a");
   link.href = stripCanvas.toDataURL("image/png");
-  link.download = "puppy-photobooth-strip.png";
+  link.download = "aot-photobooth-strip.png";
   link.click();
 };
 
