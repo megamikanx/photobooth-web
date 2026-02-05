@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="./styles/main.css" />
   </head>
   <body>
+    <!-- Site header -->
     <header class="site-header">
       <div class="container">
         <h1>Photobooth</h1>
@@ -14,7 +15,9 @@
       </div>
     </header>
 
+    <!-- Main app container -->
     <main class="container">
+      <!-- Capture screen: live camera + controls -->
       <section id="captureScreen" class="screen">
         <div class="booth">
           <div class="preview">
@@ -46,6 +49,7 @@
           </div>
         </div>
 
+        <!-- Frame selection: choose a 4-piece frame set -->
         <section class="frames">
           <h2>Choose a frame set</h2>
           <div class="frame-list" id="frameList" aria-disabled="true">
@@ -60,12 +64,14 @@
         </section>
       </section>
 
+      <!-- Selection screen: pick 4 of 8 for the strip -->
       <section id="selectionScreen" class="screen hidden">
         <div class="selection-header">
           <h2>Build your photo strip</h2>
           <p>Select a slot, then choose a photo from your 8 captures.</p>
         </div>
         <div class="selection-body">
+          <!-- Strip slots (4 total) -->
           <div class="strip">
             <button class="strip-slot is-active" data-slot="0" type="button">
               <img class="strip-photo" alt="Strip slot 1 photo" />
@@ -89,6 +95,7 @@
             </button>
           </div>
 
+          <!-- Thumbnails and final actions -->
           <div class="thumbnail-panel">
             <h3>Choose 4 of 10</h3>
             <div class="thumbnail-grid" id="thumbnailGrid"></div>
@@ -103,6 +110,7 @@
       </section>
     </main>
 
+    <!-- Footer note -->
     <footer class="site-footer">
       <div class="container">
         <small>Tip: Add your PNG/SVG frames in <code>src/assets/frames</code>.</small>

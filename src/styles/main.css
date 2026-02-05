@@ -1,3 +1,4 @@
+/* Theme tokens */
 :root {
   color-scheme: light;
   font-family: "Segoe UI", system-ui, sans-serif;
@@ -9,23 +10,27 @@
   --border: #e5e5ec;
 }
 
+/* Base reset */
 *,
 *::before,
 *::after {
   box-sizing: border-box;
 }
 
+/* Page background and text */
 body {
   margin: 0;
   background: var(--bg);
   color: var(--text);
 }
 
+/* Layout container */
 .container {
   width: min(1080px, 92vw);
   margin: 0 auto;
 }
 
+/* Header */
 .site-header {
   padding: 32px 0 16px;
 }
@@ -40,6 +45,7 @@ body {
   color: var(--muted);
 }
 
+/* Capture layout */
 .booth {
   display: grid;
   gap: 24px;
@@ -47,15 +53,18 @@ body {
   align-items: start;
 }
 
+/* Screen sections */
 .screen {
   display: grid;
   gap: 24px;
 }
 
+/* Optional portrait filter */
 .portrait {
   filter: blur(0.4px) brightness(1.1) hue-rotate(12deg) grayscale(10%) contrast(115%);
 }
 
+/* Camera preview frame */
 .preview {
   position: relative;
   background: var(--card);
@@ -68,6 +77,7 @@ body {
   aspect-ratio: 4 / 3;
 }
 
+/* Preview layers */
 .preview video,
 .preview canvas,
 .preview img.frame {
@@ -82,36 +92,43 @@ body {
   pointer-events: none;
 }
 
+/* Mirror camera preview */
 .preview video.mirrored {
   transform: scaleX(-1);
 }
 
+/* Live filter on preview/canvas */
 .preview video.filtered,
 .preview canvas.filtered {
   filter: blur(0.4px) brightness(1.1) hue-rotate(12deg) grayscale(10%) contrast(115%);
 }
 
+/* Buttons row */
 .controls {
   display: flex;
   gap: 12px;
   flex-wrap: wrap;
 }
 
+/* Capture controls panel */
 .controls-panel {
   display: grid;
   gap: 12px;
   align-content: start;
 }
 
+/* Capture count */
 .status {
   font-weight: 600;
 }
 
+/* Helper text */
 .hint {
   margin: 0;
   color: var(--muted);
 }
 
+/* Buttons */
 button {
   appearance: none;
   border: 1px solid var(--border);
@@ -134,6 +151,7 @@ button:active {
   transform: translateY(1px);
 }
 
+/* Frame selection area */
 .frames {
   margin-top: 32px;
 }
@@ -143,17 +161,20 @@ button:active {
   font-size: 1.2rem;
 }
 
+/* Frame buttons grid */
 .frame-list {
   display: grid;
   gap: 12px;
   grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
 }
 
+/* Disabled frame state */
 .frame-list[aria-disabled="true"] .frame-option {
   opacity: 0.5;
   pointer-events: none;
 }
 
+/* Frame option buttons */
 .frame-option {
   display: grid;
   place-items: center;
@@ -168,6 +189,7 @@ button:active {
   box-shadow: 0 0 0 2px rgba(255, 122, 162, 0.25);
 }
 
+/* Selection header */
 .selection-header h2 {
   margin: 0 0 8px;
 }
@@ -177,6 +199,7 @@ button:active {
   color: var(--muted);
 }
 
+/* Selection layout */
 .selection-body {
   display: grid;
   grid-template-columns: minmax(220px, 280px) 1fr;
@@ -184,6 +207,7 @@ button:active {
   align-items: start;
 }
 
+/* Strip container */
 .strip {
   display: grid;
   gap: 12px;
@@ -193,6 +217,7 @@ button:active {
   border: 1px solid var(--border);
 }
 
+/* Individual strip slot */
 .strip-slot {
   position: relative;
   width: 100%;
@@ -204,6 +229,7 @@ button:active {
   color: var(--muted);
 }
 
+/* Slot images */
 .strip-slot img {
   position: absolute;
   inset: 0;
@@ -215,16 +241,19 @@ button:active {
   pointer-events: none;
 }
 
+/* Frame overlay inside slot */
 .strip-slot img.strip-frame {
   opacity: 1;
   pointer-events: none;
   z-index: 2;
 }
 
+/* Hide frame when none selected */
 .strip-slot img.strip-frame.is-hidden {
   display: none;
 }
 
+/* Slot index label */
 .strip-slot span {
   position: relative;
   z-index: 1;
@@ -232,21 +261,25 @@ button:active {
   pointer-events: none;
 }
 
+/* Show photo when filled */
 .strip-slot.is-filled img.strip-photo {
   opacity: 1;
 }
 
+/* Active slot highlight */
 .strip-slot.is-active {
   border-color: var(--accent);
   box-shadow: 0 0 0 2px rgba(255, 122, 162, 0.25);
   color: var(--text);
 }
 
+/* Thumbnail panel */
 .thumbnail-panel h3 {
   margin: 0 0 12px;
   font-size: 1.1rem;
 }
 
+/* Thumbnails grid */
 .thumbnail-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
@@ -254,6 +287,7 @@ button:active {
   margin-bottom: 16px;
 }
 
+/* Thumbnail button */
 .thumbnail {
   position: relative;
   border-radius: 16px;
@@ -264,6 +298,7 @@ button:active {
   padding: 0;
 }
 
+/* Thumbnail image */
 .thumbnail img {
   position: absolute;
   inset: 0;
@@ -272,16 +307,19 @@ button:active {
   object-fit: cover;
 }
 
+/* Footer */
 .site-footer {
   margin: 32px 0 40px;
   color: var(--muted);
   font-size: 0.85rem;
 }
 
+/* Utility: hide */
 .hidden {
   display: none;
 }
 
+/* Responsive layout */
 @media (max-width: 900px) {
   .booth {
     grid-template-columns: 1fr;
