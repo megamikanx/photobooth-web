@@ -1,3 +1,4 @@
+// DOM references
 const video = document.querySelector("#camera");
 const canvas = document.querySelector("#canvas");
 const frameOverlay = document.querySelector("#frameOverlay");
@@ -14,6 +15,7 @@ const stripSlots = document.querySelectorAll(".strip-slot");
 const downloadStripButton = document.querySelector("#downloadStrip");
 const startOverButton = document.querySelector("#startOver");
 
+// App configuration
 const MAX_PHOTOS = 8;
 const STRIP_SLOTS = 4;
 const FRAME_SETS = {
@@ -24,6 +26,7 @@ const FRAME_SETS = {
     "./assets/frames/set-01-4.png",
   ],
 };
+// App state
 const photos = [];
 const selectedSlots = Array.from({ length: STRIP_SLOTS }, () => null);
 const slotImages = Array.from({ length: STRIP_SLOTS }, () => null);
@@ -36,6 +39,7 @@ let selectedFrameSet = null;
 let activeSlotIndex = 0;
 let frameLocked = false;
 
+// Frame selection helpers
 const getActiveFrameOption = () =>
   frameList.querySelector(".frame-option.is-active");
 
@@ -49,6 +53,7 @@ const getCurrentCaptureFramePath = () => {
   return selectedFrameSet[frameIndex];
 };
 
+// Apply selected frame or set to the preview
 const setFrame = (framePath) => {
   selectedFramePath = framePath;
   selectedFrameSet = null;
@@ -64,6 +69,7 @@ const setFrameSet = (frameSetKey) => {
   }
 };
 
+// UI updates
 const updateCaptureCount = () => {
   captureCount.textContent = photos.length;
   captureMax.textContent = MAX_PHOTOS;
@@ -80,6 +86,7 @@ const setFrameListState = (enabled) => {
   frameList.setAttribute("aria-disabled", enabled ? "false" : "true");
 };
 
+// Preview frame handling
 const setPreviewFrame = (framePath) => {
   if (!framePath) {
     frameOverlay.src = "";
@@ -107,6 +114,7 @@ const applyActiveFrameSelection = () => {
   }
 };
 
+// Camera helpers
 const waitForVideoReady = () =>
   new Promise((resolve) => {
     if (video.readyState >= 2) {
@@ -135,6 +143,7 @@ const startCamera = async () => {
   }
 };
 
+// Capture helpers
 const drawFrameIfNeeded = (context, callback) => {
   const framePath = getCurrentCaptureFramePath();
   if (!framePath) {
@@ -195,6 +204,7 @@ const capturePhoto = async () => {
   });
 };
 
+// Strip selection helpers
 const setActiveSlot = (index) => {
   activeSlotIndex = index;
   stripSlots.forEach((slot) => slot.classList.remove("is-active"));
@@ -218,6 +228,7 @@ const updateSlots = () => {
   });
 };
 
+// Selection screen rendering
 const renderThumbnails = () => {
   thumbnailGrid.innerHTML = "";
   photos.forEach((photo, index) => {
@@ -255,6 +266,7 @@ const assignPhotoToSlot = (photoIndex) => {
   updateSlots();
 };
 
+// Image loading and caching
 const getCachedImage = (src) => {
   if (!src) return null;
   if (imageCache.has(src)) return imageCache.get(src);
@@ -292,6 +304,7 @@ const loadFrameDataUrl = async (src) => {
   }
 };
 
+// Canvas drawing
 const drawCover = (context, img, x, y, width, height) => {
   const scale = Math.max(width / img.width, height / img.height);
   const drawWidth = img.width * scale;
@@ -309,6 +322,7 @@ const drawImageSafe = (context, img, x, y, width, height) => {
   }
 };
 
+// Export
 const downloadStrip = async () => {
   if (selectedSlots.some((slot) => !slot)) {
     alert("Please fill all 4 slots before downloading.");
@@ -325,7 +339,15 @@ const downloadStrip = async () => {
     ? await Promise.all(
         selectedFrameSet.map(async (src) => {
           const dataUrl = await loadFrameDataUrl(src);
-          return dataUrl ? loadImage(dataUrl) : null;
+          if (dataUrl) {
+            return await loadImage(dataUrl);
+          }
+          try {
+            return await loadImage(src);
+          } catch (error) {
+            console.warn("Failed to load frame image:", src, error);
+            return null;
+          }
         })
       )
     : [];
@@ -370,6 +392,7 @@ const downloadStrip = async () => {
   link.click();
 };
 
+// Reset flow
 const startOver = () => {
   photos.length = 0;
   selectedSlots.fill(null);
@@ -384,6 +407,7 @@ const startOver = () => {
   setFrameListState(Boolean(stream));
 };
 
+// Event listeners
 frameList.addEventListener("click", (event) => {
   if (frameLocked) return;
   const button = event.target.closest(".frame-option");
@@ -426,6 +450,7 @@ captureButton.addEventListener("click", capturePhoto);
 downloadStripButton.addEventListener("click", downloadStrip);
 startOverButton.addEventListener("click", startOver);
 
+// Initial state
 setButtonsState({ cameraOn: false });
 updateCaptureCount();
 setFrame("");
