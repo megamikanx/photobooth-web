@@ -189,19 +189,17 @@ const capturePhoto = async () => {
   context.restore();
   context.filter = "none";
 
-  drawFrameIfNeeded(context, () => {
-    photos.push(canvas.toDataURL("image/png"));
-    if (!frameLocked) {
-      frameLocked = true;
-      setFrameListState(false);
-    }
-    updateCaptureCount();
-    setButtonsState({ cameraOn: true });
+  photos.push(canvas.toDataURL("image/png"));
+  if (!frameLocked) {
+    frameLocked = true;
+    setFrameListState(false);
+  }
+  updateCaptureCount();
+  setButtonsState({ cameraOn: true });
 
-    if (photos.length === MAX_PHOTOS) {
-      showSelectionScreen();
-    }
-  });
+  if (photos.length === MAX_PHOTOS) {
+    showSelectionScreen();
+  }
 };
 
 // Strip selection helpers
