@@ -339,18 +339,16 @@ const downloadStrip = async () => {
     ? await Promise.all(
         selectedFrameSet.map(async (src) => {
           const dataUrl = await loadFrameDataUrl(src);
-          if (dataUrl) {
-            return await loadImage(dataUrl);
-          }
-          try {
-            return await loadImage(src);
-          } catch (error) {
-            console.warn("Failed to load frame image:", src, error);
-            return null;
-          }
+          return dataUrl ? await loadImage(dataUrl) : null;
         })
       )
     : [];
+  if (selectedFrameSet && frameImages.some((img) => !img)) {
+    alert(
+      "Frames couldn't load for export. Please run the site with a local server."
+    );
+    return;
+  }
   const stripWidth = 700;
   const padding = 32;
   const gap = 20;
