@@ -26,6 +26,9 @@ const FRAME_SETS = {
 };
 const photos = [];
 const selectedSlots = Array.from({ length: STRIP_SLOTS }, () => null);
+const slotImages = Array.from({ length: STRIP_SLOTS }, () => null);
+const imageCache = new Map();
+const frameDataUrlCache = new Map();
 
 let stream = null;
 let selectedFramePath = "";
@@ -56,6 +59,9 @@ const setFrameSet = (frameSetKey) => {
   selectedFrameSet = FRAME_SETS[frameSetKey] || null;
   selectedFramePath = "";
   setPreviewFrame(getCurrentCaptureFramePath());
+  if (selectedFrameSet) {
+    selectedFrameSet.forEach((src) => getCachedImage(src));
+  }
 };
 
 const updateCaptureCount = () => {
@@ -245,7 +251,17 @@ const getActiveSlotIndex = () => {
 const assignPhotoToSlot = (photoIndex) => {
   const index = getActiveSlotIndex();
   selectedSlots[index] = photos[photoIndex];
+  slotImages[index] = getCachedImage(photos[photoIndex]);
   updateSlots();
+};
+
+const getCachedImage = (src) => {
+  if (!src) return null;
+  if (imageCache.has(src)) return imageCache.get(src);
+  const img = new Image();
+  img.src = src;
+  imageCache.set(src, img);
+  return img;
 };
 
 const loadImage = (src) =>
@@ -256,6 +272,26 @@ const loadImage = (src) =>
     img.src = src;
   });
 
+const loadFrameDataUrl = async (src) => {
+  if (!src) return null;
+  if (frameDataUrlCache.has(src)) return frameDataUrlCache.get(src);
+  try {
+    const response = await fetch(src);
+    const blob = await response.blob();
+    const dataUrl = await new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+    frameDataUrlCache.set(src, dataUrl);
+    return dataUrl;
+  } catch (error) {
+    console.warn("Failed to load frame data URL:", src, error);
+    return null;
+  }
+};
+
 const drawCover = (context, img, x, y, width, height) => {
   const scale = Math.max(width / img.width, height / img.height);
   const drawWidth = img.width * scale;
@@ -265,17 +301,33 @@ const drawCover = (context, img, x, y, width, height) => {
   context.drawImage(img, offsetX, offsetY, drawWidth, drawHeight);
 };
 
+const drawImageSafe = (context, img, x, y, width, height) => {
+  try {
+    context.drawImage(img, x, y, width, height);
+  } catch (error) {
+    console.warn("Failed to draw image:", error);
+  }
+};
+
 const downloadStrip = async () => {
   if (selectedSlots.some((slot) => !slot)) {
     alert("Please fill all 4 slots before downloading.");
     return;
   }
 
-  const images = await Promise.all(
-    selectedSlots.map((slot) => loadImage(slot))
-  );
+  if (slotImages.some((img) => !img || !img.complete)) {
+    alert("Photos are still loading. Please try again.");
+    return;
+  }
+
+  const images = slotImages;
   const frameImages = selectedFrameSet
-    ? await Promise.all(selectedFrameSet.map((src) => loadImage(src)))
+    ? await Promise.all(
+        selectedFrameSet.map(async (src) => {
+          const dataUrl = await loadFrameDataUrl(src);
+          return dataUrl ? loadImage(dataUrl) : null;
+        })
+      )
     : [];
   const stripWidth = 700;
   const padding = 32;
@@ -295,13 +347,25 @@ const downloadStrip = async () => {
   images.forEach((img, index) => {
     const y = padding + index * (photoHeight + gap);
     drawCover(context, img, padding, y, photoWidth, photoHeight);
-    if (frameImages[index]) {
-      context.drawImage(frameImages[index], padding, y, photoWidth, photoHeight);
+    const frameImage = frameImages[index];
+    if (
+      frameImage &&
+      frameImage.complete &&
+      frameImage.naturalWidth > 0 &&
+      frameImage.naturalHeight > 0
+    ) {
+      drawImageSafe(context, frameImage, padding, y, photoWidth, photoHeight);
     }
   });
 
   const link = document.createElement("a");
-  link.href = stripCanvas.toDataURL("image/png");
+  try {
+    link.href = stripCanvas.toDataURL("image/png");
+  } catch (error) {
+    console.error("Failed to export strip:", error);
+    alert("Unable to export the strip. Try again without a frame set.");
+    return;
+  }
   link.download = "aot-photobooth-strip.png";
   link.click();
 };
@@ -309,6 +373,7 @@ const downloadStrip = async () => {
 const startOver = () => {
   photos.length = 0;
   selectedSlots.fill(null);
+  slotImages.fill(null);
   frameLocked = false;
   updateCaptureCount();
   updateSlots();
