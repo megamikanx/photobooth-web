@@ -1,0 +1,8 @@
+{
+  "name": "photobooth-web",
+  "private": true,
+  "description": "Static photobooth site",
+  "scripts": {
+    "build": "echo 'Static site, no build step'"
+  }
+}
